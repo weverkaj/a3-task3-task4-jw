@@ -1,0 +1,121 @@
+---
+title: "Urchins"
+author: "Jacob Weverka"
+date: "11/4/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here)
+library(janitor)
+
+```
+
+
+Read in urchin data
+```{r message=FALSE}
+
+urchins = read_csv(here("data/urchins.csv")) %>%
+  clean_names()
+
+
+```
+
+
+###Size comparison of urchins
+
+```{r}
+ggplot(urchins, aes(x = common_name, y = size)) +
+  geom_boxplot() +
+  xlab("Common Name") +
+  ylab("Size")
+
+ggplot(urchins, aes(x = size)) +
+  geom_histogram(binwidth = 0.5) +
+  facet_wrap(~common_name) +
+  xlab("Size") +
+  ylab("Count")
+```
+```{r message=FALSE}
+
+urchin_sum = urchins %>% 
+  group_by(common_name) %>% 
+  summarize(mean = mean(size), median = median(size), sd = sd(size), n = n())
+
+kableExtra::kable(urchin_sum)
+
+```
+
+Red urchins appear to have a greater mean size than purple urchins. Red urchins also appear to more variable in size. All the largest individuals sampled were red urchins.
+
+
+### Purple Urchins
+
+Here, we're assigning proper reef names to each site, fixing dates, and summarizing the count of purple urchins for each reef in each year.
+
+```{r}
+
+purple = urchins %>%
+  filter(common_name == "Purple Urchin") %>% 
+  mutate(date = lubridate::mdy(date),
+         site_full = case_when(
+           site == "NAPL" ~ "Naples Reef",
+           site == "AQUE" ~ "Arroyo Quemado Reef",
+           site == "CARP" ~ "Carpinteria Reef",
+           site == "MOHK" ~ "Mohawk Reef",
+           site == "IVEE" ~ "Isla Vista Reef"
+         )) %>% 
+  mutate(year = as.integer(lubridate::year(date)))
+
+
+purple_count = purple %>%
+  group_by(site_full, year) %>%
+  count()
+
+
+```
+
+
+
+Plotting the change in purple urchin abundance on each reef through time.
+
+```{r}
+ggplot(purple_count, aes(x = year, y = n, color = site_full)) +
+  geom_line(size = 1.5) +
+  scale_x_continuous(breaks=seq(2007, 2020, 1))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
